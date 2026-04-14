@@ -1,16 +1,21 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, MessageCircle, Star } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import type { Order } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Chat } from '../../components/Chat';
+import { ReviewForm } from '../../components/ReviewForm';
 import { formatDateTime, formatCurrency } from '../../lib/utils';
 
 export function ClientePedidoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [showChat, setShowChat] = useState(false);
+  const [showReview, setShowReview] = useState(true);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   useEffect(() => {
     async function fetch() {
@@ -22,6 +27,16 @@ export function ClientePedidoDetalhe() {
         .single();
       setOrder(data);
       setLoading(false);
+
+      if (data?.status === 'concluido' && data?.cliente_id) {
+        const { data: review } = await supabase
+          .from('reviews')
+          .select('id')
+          .eq('order_id', id)
+          .eq('avaliador_id', data.cliente_id)
+          .maybeSingle();
+        setHasReviewed(!!review);
+      }
     }
     fetch();
   }, [id]);
@@ -34,6 +49,9 @@ export function ClientePedidoDetalhe() {
       </div>
     );
   }
+
+  const canChat = ['aceito', 'em_andamento', 'concluido'].includes(order.status);
+  const canReview = order.status === 'concluido' && order.profissional_id && !hasReviewed;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -81,6 +99,43 @@ export function ClientePedidoDetalhe() {
           )}
         </div>
       </div>
+
+      {/* Chat section */}
+      {canChat && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 mb-4"
+          >
+            <MessageCircle className="w-4 h-4" />
+            {showChat ? 'Ocultar chat' : 'Abrir chat com profissional'}
+          </button>
+          {showChat && <Chat orderId={order.id} />}
+        </div>
+      )}
+
+      {/* Review section */}
+      {canReview && showReview && (
+        <div className="mt-6 bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Star className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Avaliar Profissional</h2>
+          </div>
+          <ReviewForm
+            orderId={order.id}
+            avaliadoId={order.profissional_id!}
+            onSubmitted={() => {
+              setHasReviewed(true);
+              setShowReview(false);
+            }}
+          />
+        </div>
+      )}
+      {hasReviewed && (
+        <div className="mt-6 bg-green-50 text-green-700 text-sm p-4 rounded-xl">
+          Você já avaliou este serviço. Obrigado!
+        </div>
+      )}
     </div>
   );
 }

@@ -6,12 +6,15 @@ import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Cadastro } from './pages/Cadastro';
 import { Categorias } from './pages/Categorias';
+import { BuscarProfissionais } from './pages/BuscarProfissionais';
+import { PerfilProfissional } from './pages/PerfilProfissional';
 import { ClienteDashboard } from './pages/cliente/Dashboard';
 import { NovoPedido } from './pages/cliente/NovoPedido';
 import { ClientePedidoDetalhe } from './pages/cliente/PedidoDetalhe';
 import { ProfissionalDashboard } from './pages/profissional/Dashboard';
 import { ProfissionalPedidoDetalhe } from './pages/profissional/PedidoDetalhe';
 import { ProfissionalPerfil } from './pages/profissional/Perfil';
+import { Planos } from './pages/profissional/Planos';
 
 export default function App() {
   return (
@@ -24,6 +27,8 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/cadastro" element={<Cadastro />} />
             <Route path="/categorias" element={<Categorias />} />
+            <Route path="/profissionais" element={<BuscarProfissionais />} />
+            <Route path="/profissional/:id" element={<PerfilProfissional />} />
 
             {/* Cliente */}
             <Route
@@ -65,6 +70,14 @@ export default function App() {
               element={
                 <ProtectedRoute allowedType="profissional">
                   <ProfissionalPerfil />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profissional/planos"
+              element={
+                <ProtectedRoute allowedType="profissional">
+                  <Planos />
                 </ProtectedRoute>
               }
             />

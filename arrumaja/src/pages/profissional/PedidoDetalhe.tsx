@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, MessageCircle, Star } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthContext } from '../../hooks/AuthContext';
 import { useOrders } from '../../hooks/useOrders';
 import type { Order } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { Chat } from '../../components/Chat';
+import { ReviewForm } from '../../components/ReviewForm';
 import { formatDateTime, formatCurrency } from '../../lib/utils';
 
 export function ProfissionalPedidoDetalhe() {
@@ -16,6 +18,8 @@ export function ProfissionalPedidoDetalhe() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [showChat, setShowChat] = useState(false);
+  const [hasReviewed, setHasReviewed] = useState(false);
 
   useEffect(() => {
     fetchOrder();
@@ -30,6 +34,16 @@ export function ProfissionalPedidoDetalhe() {
       .single();
     setOrder(data);
     setLoading(false);
+
+    if (data?.status === 'concluido' && user) {
+      const { data: review } = await supabase
+        .from('reviews')
+        .select('id')
+        .eq('order_id', id)
+        .eq('avaliador_id', user.id)
+        .maybeSingle();
+      setHasReviewed(!!review);
+    }
   }
 
   async function handleAccept() {
@@ -66,6 +80,8 @@ export function ProfissionalPedidoDetalhe() {
   }
 
   const isMyOrder = order.profissional_id === user?.id;
+  const canChat = isMyOrder && ['aceito', 'em_andamento', 'concluido'].includes(order.status);
+  const canReview = order.status === 'concluido' && isMyOrder && !hasReviewed;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -134,6 +150,40 @@ export function ProfissionalPedidoDetalhe() {
           )}
         </div>
       </div>
+
+      {/* Chat section */}
+      {canChat && (
+        <div className="mt-6">
+          <button
+            onClick={() => setShowChat(!showChat)}
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 mb-4"
+          >
+            <MessageCircle className="w-4 h-4" />
+            {showChat ? 'Ocultar chat' : 'Abrir chat com cliente'}
+          </button>
+          {showChat && <Chat orderId={order.id} />}
+        </div>
+      )}
+
+      {/* Review section */}
+      {canReview && (
+        <div className="mt-6 bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Star className="w-5 h-5 text-amber-500" />
+            <h2 className="text-lg font-semibold text-gray-900">Avaliar Cliente</h2>
+          </div>
+          <ReviewForm
+            orderId={order.id}
+            avaliadoId={order.cliente_id}
+            onSubmitted={() => setHasReviewed(true)}
+          />
+        </div>
+      )}
+      {hasReviewed && (
+        <div className="mt-6 bg-green-50 text-green-700 text-sm p-4 rounded-xl">
+          Avaliação enviada. Obrigado!
+        </div>
+      )}
     </div>
   );
 }

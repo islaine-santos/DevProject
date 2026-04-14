@@ -4,6 +4,7 @@ import { useAuthContext } from '../../hooks/AuthContext';
 import { useCategories } from '../../hooks/useCategories';
 import { ESTADOS_BR } from '../../lib/constants';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { AvatarUpload } from '../../components/AvatarUpload';
 import type { ProfessionalProfile } from '../../types';
 
 export function ProfissionalPerfil() {
@@ -14,6 +15,7 @@ export function ProfissionalPerfil() {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [bio, setBio] = useState('');
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [cidade, setCidade] = useState('');
@@ -36,6 +38,9 @@ export function ProfissionalPerfil() {
         setCidade(data.cidade);
         setEstado(data.estado);
         setDisponivel(data.disponivel);
+      }
+      if (user) {
+        setAvatarUrl(user.avatar_url);
       }
       setLoading(false);
     }
@@ -90,6 +95,11 @@ export function ProfissionalPerfil() {
       <p className="text-gray-500 mb-8">Configure suas informações e categorias de serviço</p>
 
       <form onSubmit={handleSubmit} className="bg-white p-6 md:p-8 rounded-xl border border-gray-200 shadow-sm space-y-5">
+        {/* Avatar */}
+        <div className="flex justify-center">
+          <AvatarUpload currentUrl={avatarUrl} onUploaded={setAvatarUrl} />
+        </div>
+
         {message && (
           <div className={`text-sm p-3 rounded-lg ${message.includes('Erro') ? 'bg-red-50 text-red-700' : 'bg-green-50 text-green-700'}`}>
             {message}

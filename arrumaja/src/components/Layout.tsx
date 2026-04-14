@@ -27,6 +27,9 @@ export function Layout() {
             <Link to="/categorias" className="text-gray-600 hover:text-primary-600 transition-colors">
               Categorias
             </Link>
+            <Link to="/profissionais" className="text-gray-600 hover:text-primary-600 transition-colors">
+              Profissionais
+            </Link>
             {user ? (
               <>
                 <Link
@@ -35,6 +38,11 @@ export function Layout() {
                 >
                   Dashboard
                 </Link>
+                {user.tipo === 'profissional' && (
+                  <Link to="/profissional/planos" className="text-accent-600 hover:text-accent-700 transition-colors font-medium">
+                    Planos
+                  </Link>
+                )}
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-gray-500">{user.nome}</span>
                   <button
@@ -81,6 +89,13 @@ export function Layout() {
             >
               Categorias
             </Link>
+            <Link
+              to="/profissionais"
+              className="block text-gray-600 hover:text-primary-600"
+              onClick={() => setMenuOpen(false)}
+            >
+              Profissionais
+            </Link>
             {user ? (
               <>
                 <Link
@@ -90,6 +105,15 @@ export function Layout() {
                 >
                   Dashboard
                 </Link>
+                {user.tipo === 'profissional' && (
+                  <Link
+                    to="/profissional/planos"
+                    className="block text-accent-600 hover:text-accent-700 font-medium"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Planos
+                  </Link>
+                )}
                 <button
                   onClick={() => {
                     setMenuOpen(false);
