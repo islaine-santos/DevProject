@@ -1,26 +1,46 @@
 import { useState } from 'react';
 import { useAuthContext } from '../../hooks/AuthContext';
 import { useOrders } from '../../hooks/useOrders';
+import { useProfessional } from '../../hooks/useProfessional';
+import { useWallet } from '../../hooks/useWallet';
 import { OrderCard } from '../../components/OrderCard';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
+import { KycStatusBanner } from '../../components/professionals/KycStatusBanner';
+import { WalletBalance } from '../../components/common/WalletBalance';
 
 export function ProfissionalDashboard() {
   const { user } = useAuthContext();
+  const { professional, loading: loadingProfessional } = useProfessional(user?.id);
+  const { wallet } = useWallet(professional?.id);
   const [tab, setTab] = useState<'disponiveis' | 'meus'>('disponiveis');
 
   const { orders: availableOrders, loading: loadingAvailable } = useOrders({
-    status: 'aguardando',
+    status: 'aguardando_profissional',
   });
   const { orders: myOrders, loading: loadingMy } = useOrders({
     profissionalId: user?.id,
   });
 
-  const loading = tab === 'disponiveis' ? loadingAvailable : loadingMy;
+  const loading = loadingProfessional || (tab === 'disponiveis' ? loadingAvailable : loadingMy);
   const orders = tab === 'disponiveis' ? availableOrders : myOrders;
+
+  if (loadingProfessional) return <LoadingSpinner />;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold text-gray-900 mb-6">Painel do Profissional</h1>
+
+      {professional && professional.kyc_status !== 'aprovado' && (
+        <div className="mb-6">
+          <KycStatusBanner status={professional.kyc_status} />
+        </div>
+      )}
+
+      {wallet && (
+        <div className="mb-6">
+          <WalletBalance saldo={wallet.saldo} />
+        </div>
+      )}
 
       <div className="flex gap-2 mb-6">
         <button
@@ -52,7 +72,7 @@ export function ProfissionalDashboard() {
           <p className="text-gray-500">
             {tab === 'disponiveis'
               ? 'Nenhum pedido disponível no momento.'
-              : 'Você ainda não aceitou nenhum pedido.'}
+              : 'Você ainda não tem nenhum pedido.'}
           </p>
         </div>
       ) : (

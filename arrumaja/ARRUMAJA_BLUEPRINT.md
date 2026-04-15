@@ -1,101 +1,113 @@
-# ArrumaJá — Blueprint Técnico
+# ArrumaJá — Blueprint Técnico v2
 
 ## 1. Visão Geral
-ArrumaJá é um marketplace que conecta clientes a profissionais de serviços domésticos (eletricista, encanador, faxineira, pintor, etc.). A plataforma facilita a solicitação, aceite e acompanhamento de serviços.
+ArrumaJá é um marketplace de serviços domésticos com foco em **confiança e segurança**. Cliente pede serviço, profissional envia proposta com estimativa de valor, cliente aprova, serviço é executado. Diferencial: pilar de confiança com filtro "só mulheres", background check (KYC), selos de verificação, e Wallet do profissional.
 
 ## 2. Modelo de Negócio
-- **Sem taxa obrigatória**: profissionais não pagam comissão por serviço
-- **Monetização**: planos de destaque pagos (boost, pro_boost) que dão prioridade na listagem
-- **Planos**:
-  - `free`: listagem padrão, sem destaque
-  - `boost`: aparece antes dos profissionais free
-  - `pro_boost`: aparece antes de todos, badge de destaque
+- **B2C**: Clube Casa Segura R$ 14,90/mês (visita grátis após 3 meses, cashback 10%, WhatsApp prioritário)
+- **B2B**: Boost R$ 29,90/mês, Pro Boost R$ 59,90/mês (destaque na busca)
+- **Doações**: Campanhas sazonais (Outubro Rosa, Novembro Azul, Setembro Amarelo)
+- **Wallet**: Profissional recebe R$ 40 por visita gratuita concluída, pode usar para Boost ou sacar (mín. R$ 100)
 
-## 3. Entidades Principais
+## 3. Fluxo do Pedido
+1. Cliente cria pedido → `aguardando_profissional`
+2. Profissional clica "Tenho Interesse" → preenche estimativa (min-max) OU flag "necessita visita técnica"
+3. Pedido → `proposta_enviada`, profissional_id preenchido
+4. Cliente aprova → `aceito`, chat liberado
+5. Cliente recusa → volta para `aguardando_profissional`
+6. Profissional inicia → `em_andamento`
+7. Profissional conclui → `concluido`
+8. Valor final combinado via chat/presencial → campo `valor_final`
 
-### 3.1 Usuários (users)
-- Campos: id, email, nome, telefone, tipo (cliente | profissional), avatar_url, created_at
-- Autenticação via Supabase Auth (email/senha)
-- Perfil público para profissionais
+### Status do Pedido
+`criado` → `aguardando_profissional` → `proposta_enviada` → `aceito` → `em_andamento` → `concluido`
+Extras: `cancelado`, `expirado`
 
-### 3.2 Perfil Profissional (professional_profiles)
-- Campos: id, user_id, bio, categorias (array), cidade, estado, plano (free | boost | pro_boost), avaliacao_media, total_avaliacoes, disponivel, created_at
-- Relacionamento 1:1 com users (onde tipo = profissional)
+## 4. Entidades Principais
 
-### 3.3 Categorias de Serviço (service_categories)
-- Campos: id, nome, slug, icone, descricao, ativa
-- Dados iniciais via seed.sql
-- Categorias: eletricista, encanador, faxineira, pintor, jardineiro, marceneiro, pedreiro, serralheiro, ar_condicionado, mudanca
+### 4.1 Users
+- id, email, nome, telefone, tipo (cliente|profissional|admin), genero, avatar_url, created_at
 
-### 3.4 Pedidos (orders)
-- Campos: id, cliente_id, profissional_id (nullable), categoria_id, titulo, descricao, endereco, cidade, estado, valor_estimado, status, criado_em, aceito_em, concluido_em, expira_em
-- **Status flow**: criado → aguardando → aceito → em_andamento → concluido
-- Status extras: cancelado, expirado
-- Expiração automática: 48h após criação sem aceite
+### 4.2 Professionals (extends users)
+- id, user_id, bio, cidade, estado, regiao_atuacao, plano (free|boost|pro_boost), avaliacao_media, total_avaliacoes, disponivel, kyc_status (pendente|em_analise|aprovado|reprovado|suspenso), kyc_tier (0|1|2|3), selo (novo|verificado|premium|suspenso), ativo, created_at
 
-### 3.5 Avaliações (reviews)
-- Campos: id, order_id, avaliador_id, avaliado_id, nota (1-5), comentario, created_at
-- Apenas após pedido com status "concluido"
-- Uma avaliação por pedido por parte (cliente avalia profissional e vice-versa)
+### 4.3 Services (categorias)
+- id, nome, slug, icone, descricao, ativa
 
-### 3.6 Mensagens (messages)
-- Campos: id, order_id, sender_id, conteudo, lida, created_at
-- Chat entre cliente e profissional vinculado a um pedido
-- Realtime via Supabase Realtime
+### 4.4 Professional_Services (N:N)
+- professional_id, service_id
 
-## 4. Regras de Negócio
+### 4.5 Orders
+- id, cliente_id, profissional_id (nullable), service_id, titulo, descricao, endereco, cidade, estado, genero_preferencia (qualquer|feminino), valor_estimado_min, valor_estimado_max, valor_final, necessita_visita_tecnica, status, criado_em, proposta_em, aceito_em, concluido_em, expira_em
 
-### 4.1 Criação de Pedido
-- Apenas usuários tipo "cliente" podem criar pedidos
-- Campos obrigatórios: categoria, titulo, descricao, endereco, cidade, estado
-- Status inicial: "aguardando"
-- Campo expira_em = created_at + 48 horas
+### 4.6 Reviews
+- id, order_id, avaliador_id, avaliado_id, nota (1-5), comentario, doacao_valor, doacao_campanha_id, created_at
 
-### 4.2 Aceite de Pedido
-- Apenas 1 profissional pode aceitar (first-come, first-served)
-- Profissional deve ter a categoria do pedido em seu perfil
-- Profissional deve estar disponível (disponivel = true)
-- Ao aceitar: status → "aceito", profissional_id preenchido, aceito_em registrado
+### 4.7 Wallet
+- id, professional_id, saldo
 
-### 4.3 Listagem de Profissionais
-- Ordenação primária: plano (pro_boost > boost > free)
-- Ordenação secundária: avaliacao_media DESC
-- Filtros: categoria, cidade, estado, disponibilidade
+### 4.8 Wallet_Transactions
+- id, wallet_id, tipo (credito|debito|saque), valor, descricao, referencia_id, created_at
 
-### 4.4 Avaliação
-- Só permitida quando pedido status = "concluido"
-- Nota de 1 a 5 (inteiro)
-- Atualiza avaliacao_media e total_avaliacoes do profissional automaticamente
+### 4.9 Subscriptions_B2B (profissional)
+- id, professional_id, plano (boost|pro_boost), status (ativo|cancelado|expirado), inicio, fim, pagamento_via (stripe|wallet)
 
-### 4.5 Expiração
-- Pedidos sem aceite após 48h: status → "expirado"
-- Implementar via cron job ou Edge Function agendada
+### 4.10 Subscriptions_B2C (cliente)
+- id, user_id, status (ativo|cancelado|expirado), inicio, fim, meses_ativos, visita_gratuita_disponivel, cashback_acumulado
 
-## 5. Páginas da Aplicação
+### 4.11 Campaigns
+- id, nome, slug, descricao, ong_nome, ong_url, ativa, inicio, fim
 
-### 5.1 Públicas
-- **Home** (`/`): landing page com busca por categoria e CTA
-- **Login** (`/login`): formulário de login
-- **Cadastro** (`/cadastro`): registro com escolha de tipo (cliente/profissional)
-- **Categorias** (`/categorias`): listagem de todas as categorias
+### 4.12 Donations
+- id, review_id, campanha_id, user_id, valor, created_at
 
-### 5.2 Área do Cliente
-- **Dashboard** (`/cliente`): pedidos do cliente, status
-- **Novo Pedido** (`/cliente/novo-pedido`): formulário de criação
-- **Detalhes do Pedido** (`/cliente/pedido/:id`): status, chat, avaliação
+### 4.13 Security_Incidents
+- id, order_id, reporter_id, reported_id, tipo, descricao, status (aberto|em_analise|resolvido|arquivado), created_at
 
-### 5.3 Área do Profissional
-- **Dashboard** (`/profissional`): pedidos disponíveis e aceitos
-- **Meu Perfil** (`/profissional/perfil`): edição de perfil e categorias
-- **Detalhes do Pedido** (`/profissional/pedido/:id`): detalhes, chat, ações
+### 4.14 Notifications
+- id, user_id, tipo, titulo, mensagem, lida, referencia_id, referencia_tipo, created_at
 
-## 6. Políticas de Segurança (RLS)
-- Usuários só podem ver/editar seus próprios dados
-- Pedidos visíveis: para o cliente dono OU para profissionais da categoria (quando status = aguardando)
-- Mensagens visíveis apenas para participantes do pedido
-- Avaliações: leitura pública, escrita apenas por participantes do pedido concluído
+### 4.15 Messages
+- id, order_id, sender_id, conteudo, lida, created_at
 
-## 7. API / Edge Functions
-- `expire-orders`: cron job para expirar pedidos com mais de 48h
-- `update-rating`: trigger para recalcular avaliacao_media após nova avaliação
-- `send-notification`: enviar email via Resend quando pedido aceito/concluído
+### 4.16 Disputes
+- id, order_id, iniciado_por, motivo, status (aberto|mediacao|resolvido|encerrado), resolucao, created_at
+
+## 5. Match e Busca de Profissionais
+- Filtro: categoria + região + gênero (se ativo)
+- Ordem: pro_boost → boost → free, depois avaliacao_media DESC
+- Somente kyc_status = 'aprovado' e ativo = true
+- selo = 'suspenso' NUNCA aparece
+
+## 6. Filtro "Só Mulheres"
+- Toggle visível apenas para contas femininas (genero = 'feminino')
+- Sem match feminino em 2h → fallback: ver profissionais verificados OU continuar aguardando
+
+## 7. KYC (Know Your Customer)
+- **Tier 1**: CPF/CNPJ + antecedentes (API idwall/Truora) — automático
+- **Tier 2**: selfie + documento + comprovante de residência — revisão manual (SLA 24h)
+- **Tier 3**: selo "verificado" — 5 serviços concluídos, média ≥ 4.8, 0 incidentes
+
+## 8. Wallet
+- Profissional recebe R$ 40 na Wallet por visita gratuita concluída (de membro Clube)
+- Pode usar para pagar Boost/Pro Boost
+- Saque: mínimo R$ 100 (Fase 2)
+- Toda transação registrada em wallet_transactions
+
+## 9. Monetização
+- **Clube Casa Segura** R$ 14,90/mês: visita grátis após 3 meses ativo, cashback 10%, WhatsApp prioritário
+- **Boost** R$ 29,90/mês: aparece antes dos free
+- **Pro Boost** R$ 59,90/mês: topo + badge + destaque homepage
+- **Doações**: checkbox na avaliação, valor vai para campanha ativa
+
+## 10. Proteção anti-churn
+- Visita gratuita só desbloqueada no 3º mês ativo
+- Plano vendido como anual com pagamento mensal
+
+## 11. Segurança / RLS
+- Users: leitura/escrita própria; admin lê tudo
+- Professionals: leitura pública (se ativo e aprovado); escrita própria
+- Orders: cliente vê seus; profissional vê disponíveis na região + seus aceitos; admin vê tudo
+- Wallet: somente profissional dono; admin lê
+- Messages: somente participantes do pedido
+- Admin: tipo = 'admin' para acessar tudo

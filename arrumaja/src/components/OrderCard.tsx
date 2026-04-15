@@ -29,10 +29,16 @@ export function OrderCard({ order, linkPrefix }: OrderCardProps) {
           <Clock className="w-3.5 h-3.5" />
           {timeAgo(order.criado_em)}
         </span>
-        {order.valor_estimado && (
+        {order.valor_estimado_min != null && order.valor_estimado_max != null && (
           <span className="font-medium text-gray-600">
-            {formatCurrency(order.valor_estimado)}
+            {formatCurrency(order.valor_estimado_min)} – {formatCurrency(order.valor_estimado_max)}
           </span>
+        )}
+        {order.necessita_visita_tecnica && (
+          <span className="text-amber-600 font-medium">Visita técnica</span>
+        )}
+        {order.genero_preferencia === 'feminino' && (
+          <span className="text-pink-600 font-medium">Só mulheres</span>
         )}
       </div>
     </Link>

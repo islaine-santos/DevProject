@@ -1,31 +1,39 @@
 # CLAUDE.md — ArrumaJá
 
 ## Sobre o projeto
-ArrumaJá é um marketplace de serviços domésticos. Cliente pede serviço, profissional aceita, plataforma facilita a conexão. Sem taxa obrigatória — monetização por destaque pago opcional.
+ArrumaJá é um marketplace de serviços domésticos com foco em confiança e segurança. Cliente pede serviço, profissional envia proposta com estimativa de valor, cliente aprova, serviço é executado. Diferencial: pilar de confiança com filtro "só mulheres", background check (KYC), selos de verificação, e Wallet do profissional. Monetização via assinatura B2C (Clube Casa Segura) + destaque pago B2B.
 
 ## Stack
-- **Frontend**: React + Vite + Tailwind CSS
+- **Frontend**: React + Vite + Tailwind CSS (TypeScript)
 - **Backend**: Supabase (PostgreSQL + Auth + Realtime + Storage + Edge Functions)
 - **Deploy**: Vercel
 - **E-mail**: Resend
 - **Analytics**: PostHog
+- **KYC**: idwall ou Truora (API)
+- **Pagamento**: Stripe ou Mercado Pago (assinaturas + doações)
 
 ## Estrutura do projeto
 ```
 arrumaja/
-├── CLAUDE.md              ← este arquivo
-├── ARRUMAJA_BLUEPRINT.md  ← blueprint técnico completo (consultar para regras de negócio)
+├── CLAUDE.md
+├── ARRUMAJA_BLUEPRINT.md  ← blueprint técnico completo (SEMPRE consultar para regras de negócio)
+├── .env.example           ← variáveis de ambiente (copiar para .env.local)
 ├── src/
 │   ├── components/        ← componentes React reutilizáveis
+│   │   ├── ui/            ← primitivos (Button, Input, Card, Modal, Badge, StarRating)
+│   │   ├── layout/        ← Shell, Navbar, Sidebar, Footer, MobileNav
+│   │   ├── orders/        ← OrderCard, OrderTimeline, ProposalCard, GenderFilterToggle
+│   │   ├── professionals/ ← ProfessionalCard, SeloBadge, KycStatusBanner
+│   │   └── common/        ← CampaignBanner, NotificationBell, WalletBalance
 │   ├── pages/             ← páginas/rotas
-│   ├── hooks/             ← custom hooks (useAuth, useOrders, etc.)
-│   ├── lib/               ← supabase client, utils, constants
+│   ├── hooks/             ← useAuth, useOrders, useWallet, useSubscription, useNotifications
+│   ├── lib/               ← supabase.ts, constants.ts, utils.ts
 │   ├── types/             ← TypeScript types/interfaces
-│   └── styles/            ← globals, tokens Tailwind
+│   └── styles/            ← globals.css, tokens Tailwind
 ├── supabase/
 │   ├── migrations/        ← SQL migrations
-│   ├── seed.sql           ← dados iniciais (categorias de serviço)
-│   └── functions/         ← Edge Functions (se necessário)
+│   ├── seed.sql           ← categorias de serviço + admin inicial
+│   └── functions/         ← Edge Functions
 ├── public/
 └── package.json
 ```
@@ -35,18 +43,19 @@ arrumaja/
 - Componentes funcionais com hooks
 - Tailwind para estilização (sem CSS modules)
 - Naming: PascalCase para componentes, camelCase para funções/variáveis
-- Supabase client inicializado em `src/lib/supabase.ts`
-- Todas as queries ao banco via Supabase JS client (não escrever SQL no frontend)
+- Supabase client em `src/lib/supabase.ts`
+- Queries ao banco via Supabase JS client (não SQL no frontend)
 - Mobile-first: projetar todas as telas para mobile antes de desktop
+- Todas as operações financeiras (wallet, cashback) devem usar transações no banco
 
 ## Regras de negócio críticas
-Consultar `ARRUMAJA_BLUEPRINT.md` para detalhes, mas resumo:
-- Pedido aceito por 1 profissional apenas (first-come, first-served)
-- Profissionais com plano boost/pro_boost aparecem primeiro
-- Ordenação secundária por avaliacao_media DESC
-- Status do pedido: criado → aguardando → aceito → em_andamento → concluido
-- Expiração automática após 48h sem aceite
-- Avaliação apenas após status "concluido"
+Consultar `ARRUMAJA_BLUEPRINT.md` para detalhes completos. Resumo:
+- Profissional envia PROPOSTA (estimativa min-max), cliente aprova/recusa
+- Status: criado → aguardando → proposta_enviada → aceito → em_andamento → concluido
+- Filtro "Só Mulheres": toggle para contas femininas, fallback 2h
+- KYC: Tier 1 (API) → Tier 2 (manual) → Tier 3 (selo verificado)
+- Wallet: R$ 40/visita gratuita, pagar Boost ou sacar
+- Clube Casa Segura: R$ 14,90/mês, visita grátis após 3 meses
 
 ## Comandos
 ```bash

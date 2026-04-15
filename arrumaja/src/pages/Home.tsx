@@ -1,11 +1,10 @@
 import { Link } from 'react-router-dom';
 import { Search, ArrowRight, Shield, Clock, Star } from 'lucide-react';
-import { CategoryCard } from '../components/CategoryCard';
 import { LoadingSpinner } from '../components/LoadingSpinner';
-import { useCategories } from '../hooks/useCategories';
+import { useServices } from '../hooks/useServices';
 
 export function Home() {
-  const { categories, loading } = useCategories();
+  const { services, loading } = useServices();
 
   return (
     <>
@@ -18,11 +17,11 @@ export function Home() {
             </h1>
             <p className="text-primary-100 text-lg mb-8">
               Conectamos você a profissionais qualificados de serviços domésticos.
-              Rápido, fácil e sem taxas obrigatórias.
+              Receba propostas, compare e escolha com confiança.
             </p>
             <div className="flex flex-col sm:flex-row gap-3">
               <Link
-                to="/categorias"
+                to="/servicos"
                 className="inline-flex items-center justify-center gap-2 bg-white text-primary-700 font-semibold px-6 py-3 rounded-lg hover:bg-primary-50 transition-colors"
               >
                 <Search className="w-5 h-5" />
@@ -40,14 +39,14 @@ export function Home() {
         </div>
       </section>
 
-      {/* Categories */}
+      {/* Services */}
       <section className="max-w-7xl mx-auto px-4 py-12 md:py-16">
         <div className="text-center mb-10">
           <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-            Categorias de Serviço
+            Nossos Serviços
           </h2>
           <p className="text-gray-500">
-            Escolha a categoria e encontre profissionais prontos para ajudar
+            Escolha o serviço e receba propostas de profissionais prontos para ajudar
           </p>
         </div>
 
@@ -55,8 +54,15 @@ export function Home() {
           <LoadingSpinner />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4">
-            {categories.map((cat) => (
-              <CategoryCard key={cat.id} category={cat} />
+            {services.map((svc) => (
+              <Link
+                key={svc.id}
+                to={`/profissionais?service=${svc.id}`}
+                className="bg-white rounded-xl border border-gray-200 p-5 text-center hover:shadow-md transition-shadow"
+              >
+                <span className="text-2xl mb-2 block">{svc.icone || '🔧'}</span>
+                <span className="text-sm font-medium text-gray-900">{svc.nome}</span>
+              </Link>
             ))}
           </div>
         )}
@@ -81,7 +87,7 @@ export function Home() {
               </div>
               <h3 className="font-semibold text-gray-900 mb-2">Resposta Rápida</h3>
               <p className="text-sm text-gray-500">
-                Profissionais recebem seu pedido e respondem rapidamente.
+                Profissionais recebem seu pedido e enviam propostas rapidamente.
               </p>
             </div>
             <div className="text-center">

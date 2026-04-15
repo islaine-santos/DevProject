@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 import { useAuth } from './useAuth';
-import type { User } from '../types';
+import type { User, GenderType } from '../types';
 import type { Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -8,7 +8,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: unknown }>;
-  signUp: (email: string, password: string, metadata: { nome: string; tipo: string }) => Promise<{ data: unknown; error: unknown }>;
+  signUp: (email: string, password: string, metadata: { nome: string; tipo: string; genero?: GenderType }) => Promise<{ data: unknown; error: unknown }>;
   signOut: () => Promise<void>;
 }
 

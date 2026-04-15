@@ -1,24 +1,24 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
-import type { ServiceCategory } from '../types';
+import type { Service } from '../types';
 
-export function useCategories() {
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
+export function useServices() {
+  const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetch() {
       const { data } = await supabase
-        .from('service_categories')
+        .from('services')
         .select('*')
         .eq('ativa', true)
         .order('nome');
 
-      setCategories(data ?? []);
+      setServices(data ?? []);
       setLoading(false);
     }
     fetch();
   }, []);
 
-  return { categories, loading };
+  return { services, loading };
 }

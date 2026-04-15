@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
-import type { User } from '../types';
+import type { User, GenderType } from '../types';
 
 export function useAuth() {
   const [session, setSession] = useState<Session | null>(null);
@@ -49,7 +49,7 @@ export function useAuth() {
     return { error };
   }
 
-  async function signUp(email: string, password: string, metadata: { nome: string; tipo: string }) {
+  async function signUp(email: string, password: string, metadata: { nome: string; tipo: string; genero?: GenderType }) {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,

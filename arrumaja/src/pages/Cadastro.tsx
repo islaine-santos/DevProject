@@ -2,13 +2,14 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Wrench } from 'lucide-react';
 import { useAuthContext } from '../hooks/AuthContext';
-import type { UserType } from '../types';
+import type { UserType, GenderType } from '../types';
 
 export function Cadastro() {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [tipo, setTipo] = useState<UserType>('cliente');
+  const [genero, setGenero] = useState<GenderType>('nao_informado');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuthContext();
@@ -19,7 +20,7 @@ export function Cadastro() {
     setError('');
     setLoading(true);
 
-    const { error } = await signUp(email, password, { nome, tipo });
+    const { error } = await signUp(email, password, { nome, tipo, genero });
     if (error) {
       setError('Erro ao criar conta. Tente novamente.');
       setLoading(false);
@@ -120,6 +121,20 @@ export function Cadastro() {
                 Sou Profissional
               </button>
             </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Gênero</label>
+            <select
+              value={genero}
+              onChange={(e) => setGenero(e.target.value as GenderType)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none transition-shadow"
+            >
+              <option value="nao_informado">Prefiro não informar</option>
+              <option value="feminino">Feminino</option>
+              <option value="masculino">Masculino</option>
+              <option value="nao_binario">Não-binário</option>
+            </select>
           </div>
 
           <button
