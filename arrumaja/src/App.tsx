@@ -26,6 +26,7 @@ import { Planos } from './pages/profissional/Planos';
 import { ProfissionalCarteira } from './pages/profissional/Carteira';
 import { ProfissionalKyc } from './pages/profissional/Kyc';
 import { ProfissionalNotificacoes } from './pages/profissional/Notificacoes';
+import { MinhasPropostas } from './pages/profissional/MinhasPropostas';
 
 // Admin pages
 import { AdminDashboard } from './pages/admin/Dashboard';
@@ -64,6 +65,7 @@ export default function App() {
             <Route path="/profissional/carteira" element={<ProtectedRoute allowedType="profissional"><ProfissionalCarteira /></ProtectedRoute>} />
             <Route path="/profissional/kyc" element={<ProtectedRoute allowedType="profissional"><ProfissionalKyc /></ProtectedRoute>} />
             <Route path="/profissional/notificacoes" element={<ProtectedRoute allowedType="profissional"><ProfissionalNotificacoes /></ProtectedRoute>} />
+            <Route path="/profissional/propostas" element={<ProtectedRoute allowedType="profissional"><MinhasPropostas /></ProtectedRoute>} />
             <Route path="/profissional/pedido/:id" element={<ProtectedRoute allowedType="profissional"><ProfissionalPedidoDetalhe /></ProtectedRoute>} />
 
             {/* Admin */}

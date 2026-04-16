@@ -2,19 +2,19 @@ import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, MapPin, Clock, MessageCircle, Star } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
-import { useOrders } from '../../hooks/useOrders';
+import { useProposals } from '../../hooks/useProposals';
 import type { Order } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { Chat } from '../../components/Chat';
 import { ReviewForm } from '../../components/ReviewForm';
 import { OrderTimeline } from '../../components/orders/OrderTimeline';
-import { ProposalCard } from '../../components/orders/ProposalCard';
+import { ProposalComparison } from '../../components/proposals/ProposalComparison';
 import { formatDateTime, formatCurrency } from '../../lib/utils';
 
 export function ClientePedidoDetalhe() {
   const { id } = useParams<{ id: string }>();
-  const { approveProposal, rejectProposal } = useOrders();
+  const { proposals, loading: proposalsLoading, acceptProposal, rejectProposal } = useProposals(id);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [showChat, setShowChat] = useState(false);
@@ -46,19 +46,17 @@ export function ClientePedidoDetalhe() {
     }
   }
 
-  async function handleAcceptProposal() {
+  async function handleAcceptProposal(proposalId: string) {
     if (!order) return;
     setActionLoading(true);
-    await approveProposal(order.id);
+    await acceptProposal(proposalId, order.id);
     await fetchOrder();
     setActionLoading(false);
   }
 
-  async function handleRejectProposal() {
-    if (!order) return;
+  async function handleRejectProposal(proposalId: string) {
     setActionLoading(true);
-    await rejectProposal(order.id);
-    await fetchOrder();
+    await rejectProposal(proposalId);
     setActionLoading(false);
   }
 
@@ -73,6 +71,7 @@ export function ClientePedidoDetalhe() {
 
   const canChat = ['aceito', 'em_andamento', 'concluido'].includes(order.status);
   const canReview = order.status === 'concluido' && order.profissional_id && !hasReviewed;
+  const showProposals = ['aguardando_profissional', 'aceito'].includes(order.status) || proposals.length > 0;
 
   return (
     <div className="max-w-4xl mx-auto px-4 py-8">
@@ -106,11 +105,6 @@ export function ClientePedidoDetalhe() {
               {order.genero_preferencia === 'feminino' && (
                 <div className="text-pink-600 font-medium">Preferência: Só mulheres</div>
               )}
-              {order.valor_estimado_min != null && order.valor_estimado_max != null && (
-                <div className="text-gray-700 font-medium">
-                  Estimativa: {formatCurrency(order.valor_estimado_min)} – {formatCurrency(order.valor_estimado_max)}
-                </div>
-              )}
               {order.valor_final != null && (
                 <div className="text-green-700 font-medium">Valor final: {formatCurrency(order.valor_final)}</div>
               )}
@@ -119,13 +113,13 @@ export function ClientePedidoDetalhe() {
             </div>
           </div>
 
-          {/* Proposal Card */}
-          {order.status === 'proposta_enviada' && order.profissional && (
-            <ProposalCard
-              order={order}
-              professionalName={order.profissional.nome}
+          {/* Proposals Section */}
+          {showProposals && !proposalsLoading && (
+            <ProposalComparison
+              proposals={proposals}
               onAccept={handleAcceptProposal}
               onReject={handleRejectProposal}
+              actionLoading={actionLoading}
             />
           )}
           {actionLoading && <p className="text-sm text-gray-500 text-center">Processando...</p>}

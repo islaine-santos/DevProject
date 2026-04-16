@@ -49,10 +49,6 @@ export function NovoPedido() {
       cidade,
       estado,
       genero_preferencia: generoPreferencia,
-      valor_estimado_min: null,
-      valor_estimado_max: null,
-      valor_final: null,
-      necessita_visita_tecnica: false,
     });
 
     if (error) {

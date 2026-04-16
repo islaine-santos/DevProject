@@ -2,7 +2,7 @@ import { ORDER_STATUS_LABELS } from '../../lib/constants';
 import { classNames } from '../../lib/utils';
 import type { OrderStatus } from '../../types';
 
-const STATUSES: OrderStatus[] = ['aguardando_profissional', 'proposta_enviada', 'aceito', 'em_andamento', 'concluido'];
+const STATUSES: OrderStatus[] = ['aguardando_profissional', 'aceito', 'em_andamento', 'concluido'];
 
 interface OrderTimelineProps {
   currentStatus: OrderStatus;

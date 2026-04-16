@@ -1,34 +1,32 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ArrowLeft, MapPin, Clock, MessageCircle, Star, Send } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, MessageCircle, Star } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useAuthContext } from '../../hooks/AuthContext';
 import { useOrders } from '../../hooks/useOrders';
+import { useProposals } from '../../hooks/useProposals';
 import { useProfessional } from '../../hooks/useProfessional';
 import type { Order } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { OrderTimeline } from '../../components/orders/OrderTimeline';
+import { ProposalForm } from '../../components/proposals/ProposalForm';
+import { ProposalCard } from '../../components/proposals/ProposalCard';
 import { Chat } from '../../components/Chat';
 import { ReviewForm } from '../../components/ReviewForm';
-import { formatDateTime, formatCurrency } from '../../lib/utils';
+import { formatDateTime } from '../../lib/utils';
 
 export function ProfissionalPedidoDetalhe() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuthContext();
   const { professional } = useProfessional(user?.id);
-  const { sendProposal, updateOrderStatus } = useOrders();
+  const { updateOrderStatus } = useOrders();
+  const { proposals, loading: proposalsLoading, sendProposal } = useProposals(id);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [showChat, setShowChat] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
-
-  // Proposal form state
-  const [valorMin, setValorMin] = useState('');
-  const [valorMax, setValorMax] = useState('');
-  const [necessitaVisita, setNecessitaVisita] = useState(false);
-  const [proposalError, setProposalError] = useState('');
 
   useEffect(() => {
     fetchOrder();
@@ -53,42 +51,6 @@ export function ProfissionalPedidoDetalhe() {
         .maybeSingle();
       setHasReviewed(!!review);
     }
-  }
-
-  async function handleSendProposal(e: FormEvent) {
-    e.preventDefault();
-    if (!order || !professional) return;
-    setProposalError('');
-
-    const min = parseFloat(valorMin);
-    const max = parseFloat(valorMax);
-
-    if (isNaN(min) || min <= 0) {
-      setProposalError('Informe um valor mínimo válido.');
-      return;
-    }
-    if (isNaN(max) || max <= 0) {
-      setProposalError('Informe um valor máximo válido.');
-      return;
-    }
-    if (max < min) {
-      setProposalError('O valor máximo deve ser maior ou igual ao mínimo.');
-      return;
-    }
-
-    setActionLoading(true);
-    const { error } = await sendProposal(order.id, professional.id, {
-      valor_estimado_min: min,
-      valor_estimado_max: max,
-      necessita_visita_tecnica: necessitaVisita,
-    });
-
-    if (error) {
-      setProposalError('Erro ao enviar proposta. Tente novamente.');
-    } else {
-      await fetchOrder();
-    }
-    setActionLoading(false);
   }
 
   async function handleStart() {
@@ -117,6 +79,8 @@ export function ProfissionalPedidoDetalhe() {
   }
 
   const isMyOrder = order.profissional_id === professional?.id;
+  const myProposal = proposals.find((p) => p.profissional_id === professional?.id);
+  const canSendProposal = order.status === 'aguardando_profissional' && professional && !myProposal;
   const canChat = isMyOrder && ['aceito', 'em_andamento', 'concluido'].includes(order.status);
   const canReview = order.status === 'concluido' && isMyOrder && !hasReviewed;
 
@@ -154,11 +118,6 @@ export function ProfissionalPedidoDetalhe() {
               <span className="font-medium">Cliente:</span> {order.cliente.nome}
             </div>
           )}
-          {order.valor_estimado_min != null && order.valor_estimado_max != null && (
-            <div className="text-gray-700 font-medium">
-              Estimativa: {formatCurrency(order.valor_estimado_min)} - {formatCurrency(order.valor_estimado_max)}
-            </div>
-          )}
         </div>
 
         {/* Order Timeline */}
@@ -166,76 +125,22 @@ export function ProfissionalPedidoDetalhe() {
           <OrderTimeline currentStatus={order.status} />
         </div>
 
-        {/* Proposal Form - only when order is waiting for a professional */}
-        {order.status === 'aguardando_profissional' && professional && (
-          <div className="border border-primary-200 bg-primary-50 rounded-xl p-6 mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-              <Send className="w-5 h-5 text-primary-600" />
-              Enviar Proposta
-            </h2>
-            <form onSubmit={handleSendProposal} className="space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label htmlFor="valorMin" className="block text-sm font-medium text-gray-700 mb-1">
-                    Valor mínimo (R$)
-                  </label>
-                  <input
-                    id="valorMin"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={valorMin}
-                    onChange={(e) => setValorMin(e.target.value)}
-                    placeholder="Ex: 150.00"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="valorMax" className="block text-sm font-medium text-gray-700 mb-1">
-                    Valor máximo (R$)
-                  </label>
-                  <input
-                    id="valorMax"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={valorMax}
-                    onChange={(e) => setValorMax(e.target.value)}
-                    placeholder="Ex: 300.00"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 outline-none"
-                    required
-                  />
-                </div>
-              </div>
+        {/* My existing proposal */}
+        {myProposal && !proposalsLoading && (
+          <div className="mb-6">
+            <h3 className="text-sm font-medium text-gray-500 mb-3">Sua Proposta</h3>
+            <ProposalCard proposal={myProposal} />
+          </div>
+        )}
 
-              <div className="flex items-center gap-3">
-                <input
-                  id="necessitaVisita"
-                  type="checkbox"
-                  checked={necessitaVisita}
-                  onChange={(e) => setNecessitaVisita(e.target.checked)}
-                  className="w-4 h-4 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
-                />
-                <label htmlFor="necessitaVisita" className="text-sm text-gray-700">
-                  Necessita visita técnica antes do serviço
-                </label>
-              </div>
-
-              {proposalError && (
-                <div className="bg-red-50 text-red-700 text-sm p-3 rounded-lg">
-                  {proposalError}
-                </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={actionLoading}
-                className="bg-primary-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50"
-              >
-                {actionLoading ? 'Enviando...' : 'Enviar Proposta'}
-              </button>
-            </form>
+        {/* Proposal Form */}
+        {canSendProposal && (
+          <div className="mb-6">
+            <ProposalForm
+              orderId={order.id}
+              profissionalId={professional.id}
+              onSubmit={sendProposal}
+            />
           </div>
         )}
 

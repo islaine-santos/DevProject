@@ -8,12 +8,13 @@ export type GenderPreference = 'qualquer' | 'feminino';
 export type OrderStatus =
   | 'criado'
   | 'aguardando_profissional'
-  | 'proposta_enviada'
   | 'aceito'
   | 'em_andamento'
   | 'concluido'
   | 'cancelado'
   | 'expirado';
+
+export type ProposalStatus = 'pendente' | 'aceita' | 'recusada' | 'expirada';
 
 export type SubscriptionStatus = 'ativo' | 'cancelado' | 'expirado';
 export type WalletTransactionType = 'credito' | 'debito' | 'saque';
@@ -78,19 +79,31 @@ export interface Order {
   cidade: string;
   estado: string;
   genero_preferencia: GenderPreference;
-  valor_estimado_min: number | null;
-  valor_estimado_max: number | null;
   valor_final: number | null;
-  necessita_visita_tecnica: boolean;
   status: OrderStatus;
   criado_em: string;
-  proposta_em: string | null;
   aceito_em: string | null;
   concluido_em: string | null;
   expira_em: string;
   cliente?: User;
   profissional?: User;
   service?: Service;
+  proposals?: Proposal[];
+}
+
+export interface Proposal {
+  id: string;
+  order_id: string;
+  profissional_id: string;
+  valor_estimado_min: number | null;
+  valor_estimado_max: number | null;
+  necessita_visita_tecnica: boolean;
+  mensagem: string;
+  status: ProposalStatus;
+  criado_em: string;
+  respondido_em: string | null;
+  profissional?: User;
+  professional?: Professional;
 }
 
 export interface Review {

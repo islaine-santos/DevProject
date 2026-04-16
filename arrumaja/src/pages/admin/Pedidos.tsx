@@ -6,7 +6,7 @@ import { formatDateTime } from '../../lib/utils';
 import type { Order, OrderStatus } from '../../types';
 import { ORDER_STATUS_LABELS } from '../../lib/constants';
 
-const STATUSES: (OrderStatus | 'todos')[] = ['todos', 'aguardando_profissional', 'proposta_enviada', 'aceito', 'em_andamento', 'concluido', 'cancelado', 'expirado'];
+const STATUSES: (OrderStatus | 'todos')[] = ['todos', 'aguardando_profissional', 'aceito', 'em_andamento', 'concluido', 'cancelado', 'expirado'];
 
 export function AdminPedidos() {
   const [orders, setOrders] = useState<Order[]>([]);
