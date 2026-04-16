@@ -79,6 +79,7 @@ export interface Order {
   cidade: string;
   estado: string;
   genero_preferencia: GenderPreference;
+  animais_no_local: boolean;
   valor_final: number | null;
   status: OrderStatus;
   criado_em: string;

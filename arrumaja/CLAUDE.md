@@ -32,12 +32,31 @@ arrumaja/
 │   ├── types/             ← TypeScript types/interfaces
 │   └── styles/            ← globals.css
 ├── supabase/
-│   ├── migrations/        ← SQL migrations
-│   ├── seed.sql           ← categorias de serviço + admin inicial
+│   ├── migrations/        ← SQL (001_users, 002_services, 003_orders, 004_proposals, ...)
+│   ├── seed.sql           ← categorias + admin inicial
 │   └── functions/         ← Edge Functions (cron-expiracao, wallet-credito, kyc-webhook, proposal-limit-check)
 ├── public/
 └── package.json
 ```
+
+## Variáveis de ambiente (.env.example)
+```bash
+VITE_SUPABASE_URL=http://localhost:54321
+VITE_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+RESEND_API_KEY=re_xxxxxxxxxxxx
+RESEND_FROM_EMAIL=contato@usearrumaja.com.br
+KYC_API_KEY=your-kyc-api-key
+KYC_API_URL=https://api.idwall.co
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_xxxx
+STRIPE_SECRET_KEY=sk_test_xxxx
+STRIPE_WEBHOOK_SECRET=whsec_xxxx
+VITE_POSTHOG_KEY=phc_xxxxxxxxxxxx
+VITE_POSTHOG_HOST=https://app.posthog.com
+VITE_APP_URL=https://usearrumaja.com.br
+VITE_APP_NAME=ArrumaJá
+```
+Prefixo `VITE_` = frontend. Sem prefixo = server-side only (NUNCA expor).
 
 ## Convenções
 - TypeScript obrigatório
@@ -51,7 +70,6 @@ arrumaja/
 - Limite de propostas (máx 3 pendentes por pedido) enforced via trigger ou Edge Function
 
 ## Regras de negócio críticas
-Consultar `ARRUMAJA_BLUEPRINT.md` para detalhes completos. Resumo:
 
 ### Fluxo do Pedido — Modelo de Múltiplas Propostas (v4)
 1. Cliente cria pedido → `aguardando_profissional`
@@ -73,6 +91,9 @@ NÃO existe `proposta_enviada` no pedido. Propostas têm status próprio.
 - UNIQUE (order_id, profissional_id)
 - Aceitar 1 → demais `recusada` automaticamente
 
+### Contexto do Local
+Campo `animais_no_local` em orders — cliente indica se há pets no ambiente.
+
 ### Filtro "Só Mulheres"
 - Toggle para contas femininas, fallback 2h
 
@@ -82,8 +103,12 @@ NÃO existe `proposta_enviada` no pedido. Propostas têm status próprio.
 - Clube Casa Segura: R$ 14,90/mês, visita grátis após 3 meses, cashback 10%
 - B2B: Boost R$ 29,90/mês, Pro Boost R$ 59,90/mês
 
-## Tabelas (17)
-users, professionals, services, professional_services, orders, **proposals**, reviews, subscriptions_b2b, subscriptions_b2c, wallet, wallet_transactions, donations, campaigns, security_incidents, notifications, messages, disputes
+### Guardas de rota
+- **ProtectedRoute** — redireciona `/login` se não autenticado
+- **KycGuard** — profissional sem KYC aprovado → `/profissional/verificacao`
+
+## Tabelas (19)
+users, professionals, services, professional_services, orders, proposals, reviews, subscriptions_b2b, subscriptions_b2c, wallet, wallet_transactions, donations, campaigns, security_incidents, notifications, messages, disputes, chat_moderation_alerts (Fase 2), moderation_patterns (Fase 2)
 
 ## Comandos
 ```bash

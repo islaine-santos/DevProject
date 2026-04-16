@@ -24,6 +24,7 @@ export function NovoPedido() {
   const [cidade, setCidade] = useState('');
   const [estado, setEstado] = useState('');
   const [generoPreferencia, setGeneroPreferencia] = useState<GenderPreference>('qualquer');
+  const [animaisNoLocal, setAnimaisNoLocal] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -49,6 +50,7 @@ export function NovoPedido() {
       cidade,
       estado,
       genero_preferencia: generoPreferencia,
+      animais_no_local: animaisNoLocal,
     });
 
     if (error) {
@@ -165,6 +167,18 @@ export function NovoPedido() {
                   {ESTADOS_BR.map((uf) => <option key={uf} value={uf}>{uf}</option>)}
                 </select>
               </div>
+            </div>
+
+            <div className="p-4 bg-amber-50 rounded-lg">
+              <label className="flex items-center gap-3">
+                <input
+                  type="checkbox"
+                  checked={animaisNoLocal}
+                  onChange={(e) => setAnimaisNoLocal(e.target.checked)}
+                  className="w-4 h-4 text-amber-600 border-gray-300 rounded focus:ring-amber-500"
+                />
+                <span className="text-sm text-gray-700">Há animais de estimação no local (cães, gatos, etc.)</span>
+              </label>
             </div>
           </div>
         )}
