@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Clock } from 'lucide-react';
 import type { Order } from '../types';
 import { StatusBadge } from './StatusBadge';
+import { PetsIndicator } from './orders/PetsIndicator';
 import { timeAgo } from '../lib/utils';
 
 interface OrderCardProps {
@@ -32,6 +33,7 @@ export function OrderCard({ order, linkPrefix }: OrderCardProps) {
         {order.genero_preferencia === 'feminino' && (
           <span className="text-pink-600 font-medium">Só mulheres</span>
         )}
+        <PetsIndicator animaisNoLocal={order.animais_no_local} compact />
       </div>
     </Link>
   );

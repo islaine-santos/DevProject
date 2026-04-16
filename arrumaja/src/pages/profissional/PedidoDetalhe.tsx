@@ -8,6 +8,7 @@ import { useProposals } from '../../hooks/useProposals';
 import { useProfessional } from '../../hooks/useProfessional';
 import type { Order } from '../../types';
 import { StatusBadge } from '../../components/StatusBadge';
+import { PetsIndicator } from '../../components/orders/PetsIndicator';
 import { LoadingSpinner } from '../../components/LoadingSpinner';
 import { OrderTimeline } from '../../components/orders/OrderTimeline';
 import { ProposalForm } from '../../components/proposals/ProposalForm';
@@ -119,6 +120,12 @@ export function ProfissionalPedidoDetalhe() {
             </div>
           )}
         </div>
+
+        {order.animais_no_local && (
+          <div className="mb-6">
+            <PetsIndicator animaisNoLocal />
+          </div>
+        )}
 
         {/* Order Timeline */}
         <div className="mb-8">

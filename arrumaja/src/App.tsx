@@ -81,6 +81,7 @@ export default function App() {
             <Route path="/profissional/perfil" element={<ProtectedRoute allowedType="profissional"><ProfissionalPerfil /></ProtectedRoute>} />
             <Route path="/profissional/planos" element={<ProtectedRoute allowedType="profissional"><Planos /></ProtectedRoute>} />
             <Route path="/profissional/carteira" element={<ProtectedRoute allowedType="profissional"><ProfissionalCarteira /></ProtectedRoute>} />
+            <Route path="/profissional/wallet" element={<ProtectedRoute allowedType="profissional"><ProfissionalCarteira /></ProtectedRoute>} />
             <Route path="/profissional/kyc" element={<ProtectedRoute allowedType="profissional"><ProfissionalKyc /></ProtectedRoute>} />
             <Route path="/profissional/verificacao" element={<ProtectedRoute allowedType="profissional"><ProfissionalKyc /></ProtectedRoute>} />
             <Route path="/profissional/selo" element={<ProtectedRoute allowedType="profissional"><ProfissionalSelo /></ProtectedRoute>} />
